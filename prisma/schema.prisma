@@ -1,0 +1,291 @@
+// ====================================================================
+// Enterprise Multi-Tenant Telegram Alumni Platform Schema
+// Compatible with PostgreSQL & Prisma ORM
+// ====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING_PORTAL_AUTH
+  VERIFIED
+  REJECTED
+  FLAGGED
+}
+
+enum VerificationMethod {
+  OAUTH2_SCHOOL_PORTAL
+  STUDENT_ID_API
+  TRANSCRIPT_PIN
+  ALUMNI_EXECUTIVE_MANUAL
+}
+
+enum MentorshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  COMPLETED
+}
+
+// --------------------------------------------------------------------
+// 1. Multi-Tenant Institution Architecture
+// Isolates universities (FUT Minna, UI, UNILAG, JOGS, GCO, St. Gregs, St. Mary's)
+// --------------------------------------------------------------------
+model Institution {
+  id                    String              @id @default(cuid())
+  slug                  String              @unique // e.g. "futminna", "ui", "unilag", "jogs", "gco", "stgregs", "stmarys"
+  name                  String              // e.g. "Federal University of Technology, Minna"
+  shortName             String              // e.g. "FUT Minna"
+  motto                 String?             // e.g. "Technology for Empowerment"
+  establishedYear       Int
+  logoUrl               String
+  bannerUrl             String?
+  primaryColor          String              @default("#0f766e") // Emerald / Navy / Crimson
+  accentColor           String              @default("#f59e0b") // Gold / Amber
+  
+  // External School Portal & API Configuration
+  portalType            String              @default("OAUTH2_SSO") // OAUTH2_SSO, REST_API, SOAP_PORTAL
+  portalBaseUrl         String              // e.g. "https://eportal.futminna.edu.ng/api/v1"
+  portalAuthEndpoint    String?             // e.g. "https://eportal.futminna.edu.ng/oauth/authorize"
+  portalTokenEndpoint   String?             // e.g. "https://eportal.futminna.edu.ng/oauth/token"
+  portalUserEndpoint    String?             // e.g. "https://eportal.futminna.edu.ng/api/v1/alumni/verify"
+  portalClientId        String?
+  portalClientSecretEnc String?             // Encrypted client secret
+  allowedEmailDomains   String[]            @default([]) // e.g. ["@alumni.futminna.edu.ng", "@futminna.edu.ng"]
+  
+  // Telegram Bot & Chat Infrastructure
+  telegramBotTokenEnc   String?             // Optional per-tenant bot token or shared bot
+  telegramSupergroupId  String?             // e.g. "-1001928472910" Verified Alumni Group
+  telegramChannelId     String?             // e.g. "-1001893847291" Announcements
+  inviteLinkExpireHours Int                 @default(24) // Expire single-use invite link in hours
+
+  // Academic Structure Metadata
+  faculties             Json?               // Structured list of faculties & departments
+  
+  // Relations
+  alumniProfiles        AlumniProfile[]
+  verificationSessions  VerificationSession[]
+  inviteLogs            InviteLinkLog[]
+  chapters              ChapterGroup[]
+  events                AlumniEvent[]
+
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([slug])
+}
+
+// --------------------------------------------------------------------
+// 2. Telegram User Mapping
+// One physical Telegram User mapped to 1 or N Institutional Alumni Profiles
+// --------------------------------------------------------------------
+model User {
+  id                    String              @id @default(cuid())
+  tgUserId              BigInt              @unique // Native Telegram User ID from WebApp initData
+  tgUsername            String?             // Telegram handle (without @)
+  tgFirstName           String
+  tgLastName            String?
+  tgPhotoUrl            String?
+  tgLanguageCode        String?             @default("en")
+  isBot                 Boolean             @default(false)
+  isPremium             Boolean             @default(false)
+  
+  // Relations
+  profiles              AlumniProfile[]
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([tgUserId])
+  @@index([tgUsername])
+}
+
+// --------------------------------------------------------------------
+// 3. Institutional Alumni Profile (Tenant-Scoped)
+// --------------------------------------------------------------------
+model AlumniProfile {
+  id                    String              @id @default(cuid())
+  userId                String
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  institutionId         String
+  institution           Institution         @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  
+  // Academic Identification
+  matriculationNo       String              // e.g. "2016/1/58291EE", "UI/2014/19284"
+  faculty               String              // e.g. "School of Electrical Engineering & Technology"
+  department            String              // e.g. "Computer Engineering"
+  degreeType            String              @default("B.Eng") // B.Sc, B.Eng, B.A, MBBS, M.Sc, Ph.D, HND
+  graduationYear        Int                 // e.g. 2021
+  entryYear             Int?                // e.g. 2016
+  
+  // Verification State
+  verificationStatus    VerificationStatus  @default(UNVERIFIED)
+  verifiedAt            DateTime?
+  verifiedByMethod      VerificationMethod?
+  portalExternalId      String?             // User ID in university portal
+  portalPayload         Json?               // Snapshot returned by university verification API
+  rejectionReason       String?
+  
+  // Career & Networking Profile
+  jobTitle              String?             // e.g. "Lead Cloud Architect"
+  company               String?             // e.g. "Google / Flutterwave"
+  industry              String?             // e.g. "Fintech / Cloud Computing"
+  locationCity          String?             // e.g. "Lagos / London / Toronto"
+  locationCountry       String?             // e.g. "Nigeria / United Kingdom"
+  bio                   String?             @db.Text
+  skills                String[]            @default([])
+  linkedinUrl           String?
+  githubUrl             String?
+  portfolioUrl          String?
+  
+  // Mentorship & Community
+  isMentor              Boolean             @default(false)
+  mentoringTopics       String[]            @default([])
+  chapterName           String?             // e.g. "Lagos Island Chapter", "UK & Europe Chapter"
+  isPublicInDirectory   Boolean             @default(true)
+  
+  // Activity tracking
+  lastActiveAt          DateTime            @default(now())
+  
+  // Relations
+  verificationSessions  VerificationSession[]
+  inviteLogs            InviteLinkLog[]
+  sentMentorshipReqs    MentorshipRequest[] @relation("SentRequests")
+  receivedMentorshipReqs MentorshipRequest[] @relation("ReceivedRequests")
+
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // Composite constraints: 1 profile per student per institution
+  @@unique([institutionId, matriculationNo])
+  @@unique([institutionId, userId])
+  @@index([institutionId, verificationStatus])
+  @@index([institutionId, department])
+  @@index([institutionId, graduationYear])
+  @@index([institutionId, industry])
+}
+
+// --------------------------------------------------------------------
+// 4. OAuth2 & University Portal Verification Sessions
+// --------------------------------------------------------------------
+model VerificationSession {
+  id                    String              @id @default(cuid())
+  profileId             String
+  profile               AlumniProfile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institutionId         String
+  institution           Institution         @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  
+  tgUserId              BigInt
+  stateToken            String              @unique // CSRF verification token
+  codeVerifier          String?             // PKCE code verifier
+  portalRedirectUrl     String
+  expiresAt             DateTime
+  isCompleted           Boolean             @default(false)
+  completedAt           DateTime?
+  errorMessage          String?
+  
+  createdAt             DateTime            @default(now())
+
+  @@index([stateToken])
+  @@index([profileId])
+}
+
+// --------------------------------------------------------------------
+// 5. Telegram Single-Use Invite Link Logs
+// Generated via Telegram Bot API (grammY) createChatInviteLink(member_limit=1)
+// --------------------------------------------------------------------
+model InviteLinkLog {
+  id                    String              @id @default(cuid())
+  profileId             String
+  profile               AlumniProfile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institutionId         String
+  institution           Institution         @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  
+  tgUserId              BigInt
+  telegramChatId        String              // Target Supergroup ID
+  inviteLink            String              // e.g. "https://t.me/+AbCdEfGh12345"
+  memberLimit           Int                 @default(1)
+  isUsed                Boolean             @default(false)
+  expiresAt             DateTime
+  revokedAt             DateTime?
+  
+  createdAt             DateTime            @default(now())
+
+  @@index([profileId])
+  @@index([tgUserId])
+}
+
+// --------------------------------------------------------------------
+// 6. Alumni Regional Chapters
+// --------------------------------------------------------------------
+model ChapterGroup {
+  id                    String              @id @default(cuid())
+  institutionId         String
+  institution           Institution         @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  
+  name                  String              // e.g. "Lagos Metropolis Chapter"
+  region                String              // e.g. "South-West Nigeria", "Diaspora Europe"
+  leadName              String?
+  leadTgUsername        String?
+  meetingSchedule       String?
+  chatUrl               String?
+  memberCount           Int                 @default(0)
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([institutionId])
+}
+
+// --------------------------------------------------------------------
+// 7. Mentorship Requests & Connections
+// --------------------------------------------------------------------
+model MentorshipRequest {
+  id                    String              @id @default(cuid())
+  institutionId         String
+  senderProfileId       String
+  sender                AlumniProfile       @relation("SentRequests", fields: [senderProfileId], references: [id], onDelete: Cascade)
+  mentorProfileId       String
+  mentor                AlumniProfile       @relation("ReceivedRequests", fields: [mentorProfileId], references: [id], onDelete: Cascade)
+  
+  topic                 String
+  note                  String?             @db.Text
+  status                MentorshipStatus    @default(PENDING)
+  responseNote          String?
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([senderProfileId])
+  @@index([mentorProfileId])
+}
+
+// --------------------------------------------------------------------
+// 8. Alumni Events & Reunions
+// --------------------------------------------------------------------
+model AlumniEvent {
+  id                    String              @id @default(cuid())
+  institutionId         String
+  institution           Institution         @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  
+  title                 String
+  description           String              @db.Text
+  date                  DateTime
+  locationType          String              @default("VIRTUAL") // VIRTUAL, HYBRID, IN_PERSON
+  venue                 String
+  rsvpCount             Int                 @default(0)
+  bannerUrl             String?
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([institutionId])
+}

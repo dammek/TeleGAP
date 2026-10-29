@@ -1,0 +1,6 @@
+{
+  "name": "Telegram Alumni Platform",
+  "description": "Multi-tenant Telegram Mini App for university alumni membership, automated school portal verification, and searchable networking directory.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
