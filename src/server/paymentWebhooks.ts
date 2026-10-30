@@ -13,11 +13,12 @@ webhookRouter.get('/api/webhooks/status', (req: Request, res: Response) => {
     success: true,
     data: {
       paystackConfigured: !!process.env.PAYSTACK_SECRET_KEY,
-      flutterwaveConfigured: !!process.env.FLUTTERWAVE_SECRET_HASH,
+      flutterwaveConfigured: false,
+      flutterwaveEnabled: false,
       telegramBotConfigured: !!process.env.TELEGRAM_BOT_TOKEN,
       botUsername: telegramBot.botUsername,
       paystackWebhookUrl: `${req.protocol}://${req.get('host')}/api/webhooks/paystack`,
-      flutterwaveWebhookUrl: `${req.protocol}://${req.get('host')}/api/webhooks/flutterwave`
+      flutterwaveWebhookUrl: null
     }
   });
 });
@@ -92,64 +93,11 @@ webhookRouter.post('/api/webhooks/paystack', async (req: Request, res: Response)
 });
 
 /**
- * Flutterwave Webhook Handler (Nigeria NGN, Bank Transfer & USSD)
- * Verifies secret hash in `verif-hash`
+ * Flutterwave Webhook Handler (Temporarily Disabled)
  */
-webhookRouter.post('/api/webhooks/flutterwave', async (req: Request, res: Response) => {
-  try {
-    const flwSecretHash = process.env.FLUTTERWAVE_SECRET_HASH;
-    const signature = req.headers['verif-hash'] as string;
-
-    if (flwSecretHash && signature) {
-      if (signature !== flwSecretHash) {
-        console.warn('[Flutterwave Webhook] Secret hash mismatch');
-        return res.status(401).json({ success: false, error: 'Invalid Flutterwave secret hash' });
-      }
-    }
-
-    const payload = req.body;
-    const data = payload?.data || payload;
-    const status = data?.status;
-
-    if (status === 'successful' || payload?.event === 'charge.completed') {
-      const reference = data?.tx_ref || data?.flw_ref || `FLW-${Date.now()}`;
-      const amountNgn = Number(data?.amount || 0);
-      const metadata = data?.meta || {};
-      const tgUserId = metadata.tgUserId || metadata.userId || '984102941';
-      const paymentType = data?.payment_type || 'BANK_TRANSFER';
-
-      // Idempotency check
-      const existingTx = db.getTransactionByReference(reference);
-      if (existingTx) {
-        return res.status(200).json({ success: true, message: 'Transaction already processed' });
-      }
-
-      // Credit the ZebraWallet
-      const wallet = db.creditWallet(tgUserId, amountNgn, {
-        reference,
-        channel: `FLUTTERWAVE_${paymentType.toUpperCase()}`,
-        title: `Flutterwave Deposit (${paymentType})`,
-        description: `Instant online deposit of ₦${amountNgn.toLocaleString()} via Flutterwave.`
-      });
-
-      // Dispatch real-time Telegram notification via @Tel_alum_bot
-      await telegramBot.sendWalletCreditNotification(
-        tgUserId,
-        amountNgn,
-        reference,
-        wallet.balanceNgn,
-        'Flutterwave Gateway'
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Wallet credited and Telegram alert dispatched'
-      });
-    }
-
-    return res.status(200).json({ success: true, message: 'Event ignored' });
-  } catch (err: any) {
-    console.error('[Flutterwave Webhook Error]:', err);
-    return res.status(500).json({ success: false, error: err.message });
-  }
+webhookRouter.post('/api/webhooks/flutterwave', async (_req: Request, res: Response) => {
+  return res.status(503).json({
+    success: false,
+    error: 'Flutterwave payment processing is currently disabled.'
+  });
 });

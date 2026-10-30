@@ -51,6 +51,9 @@ export interface TelegramUser {
   tgPhotoUrl?: string;
   tgLanguageCode?: string;
   isPremium?: boolean;
+  isAdmin?: boolean;
+  adminRole?: 'SUPERADMIN' | 'INSTITUTION_ADMIN';
+  adminInstitutionId?: string;
 }
 
 export interface AlumniProfile {
@@ -70,6 +73,11 @@ export interface AlumniProfile {
   portalExternalId?: string;
   portalPayload?: Record<string, unknown>;
   rejectionReason?: string;
+  certificateMediaId?: string;
+  certificateFileName?: string;
+  submittedVerificationAt?: string;
+  isAdmin?: boolean;
+  adminRole?: 'SUPERADMIN' | 'INSTITUTION_ADMIN';
   
   // Career & Networking Profile
   jobTitle?: string;
@@ -201,7 +209,7 @@ export interface MentorshipRequest {
   goal?: string;
   note?: string;
   cadence?: string;
-  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'COMPLETED';
   createdAt: string;
   mentorName?: string;
   mentorRole?: string;
@@ -434,5 +442,84 @@ export interface RecentTelegramMessage {
   channelName?: string;
   isVerifiedAlumnus?: boolean;
 }
+
+// ====================================================================
+// Admin Dashboard & Institutional Oversight Types
+// ====================================================================
+
+export interface AdminUserStats {
+  totalAlumni: number;
+  verifiedAlumni: number;
+  pendingVerifications: number;
+  rejectedAlumni: number;
+  unverifiedAlumni: number;
+  verificationRate: number; // percentage
+  weeklyGrowthPercent: number;
+}
+
+export interface AdminMentorshipStats {
+  totalRequests: number;
+  activePairs: number;
+  pendingRequests: number;
+  completedSessions: number;
+  declinedRequests: number;
+  averageResponseTimeHours: number;
+  byDiscipline: {
+    discipline: string;
+    count: number;
+    percentage: number;
+  }[];
+  byStatus: {
+    status: 'PENDING' | 'ACCEPTED' | 'COMPLETED' | 'DECLINED';
+    count: number;
+  }[];
+}
+
+export interface AdminEngagementStats {
+  active30DayAlumni: number;
+  totalProfileViews: number;
+  totalConnectionsSent: number;
+  telegramGroupJoinsThisMonth: number;
+  telegramNotificationDeliveries: number;
+  telegramDeliverySuccessRate: number;
+  dailyActivity: {
+    date: string;
+    activeUsers: number;
+    connections: number;
+    verifications: number;
+  }[];
+}
+
+export interface AdminTreasuryStats {
+  totalVolumeNgn: number;
+  transactionCount: number;
+  paystackLiveBalanceNgn: number;
+  duesCollectedNgn: number;
+  eventRegistrationsNgn: number;
+  mentorshipPledgesNgn: number;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  institutionId?: string;
+  action: 'VERIFICATION_APPROVED' | 'VERIFICATION_REJECTED' | 'MENTORSHIP_PINGED' | 'ADMIN_LOGIN' | 'ROSTER_EXPORTED';
+  actorName: string;
+  targetName: string;
+  targetDetails?: string;
+  timestamp: string;
+  status: 'SUCCESS' | 'WARNING' | 'INFO';
+}
+
+export interface AdminDashboardData {
+  institution: Institution | { id: string; name: string; shortName: string; logoUrl?: string; [key: string]: any };
+  userStats: AdminUserStats;
+  mentorshipStats: AdminMentorshipStats;
+  engagementStats: AdminEngagementStats;
+  treasuryStats: AdminTreasuryStats;
+  pendingVerifications: AlumniProfile[];
+  activeMentorships: MentorshipRequest[];
+  recentAuditLogs: AdminAuditLog[];
+}
+
 
 

@@ -43,8 +43,9 @@ export const TelegramDevToolbar: React.FC<TelegramDevToolbarProps> = ({
                     ? 'bg-blue-600 text-white font-bold shadow-sm'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
-                title={`Emulate @${u.tgUsername} (tg_user_id: ${u.tgUserId})`}
+                title={`Emulate @${u.tgUsername} (tg_user_id: ${u.tgUserId}) ${u.isAdmin ? '· Admin' : '· Member'}`}
               >
+                {u.isAdmin && <Shield className="w-2.5 h-2.5 text-amber-400" />}
                 <span>{u.tgFirstName}</span>
                 {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
               </button>

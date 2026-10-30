@@ -1208,29 +1208,28 @@ export const AlumniWalletModal: React.FC<AlumniWalletModalProps> = ({
                       </button>
                     </div>
 
-                    {/* Flutterwave */}
-                    <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2 hover:border-amber-500/40 transition-colors">
+                    {/* Flutterwave (Disabled for now) */}
+                    <div className="p-3 bg-slate-900/40 border border-slate-800/60 rounded-xl space-y-2 opacity-60 select-none">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xs font-mono">
+                          <div className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700/60 flex items-center justify-center text-slate-400 font-black text-xs font-mono">
                             F
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-slate-200">Flutterwave</div>
-                            <div className="text-[10px] text-slate-400">NUBAN, Cards, Mobile Money</div>
+                            <div className="text-xs font-bold text-slate-400">Flutterwave</div>
+                            <div className="text-[10px] text-slate-500">Temporarily disabled</div>
                           </div>
                         </div>
-                        <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800 font-mono">
-                          Pan-Africa
+                        <span className="text-[9px] bg-slate-800/80 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700/60 font-mono">
+                          Disabled
                         </span>
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleSimulateTopUp(50)}
-                        disabled={isProcessing}
-                        className="w-full py-1.5 bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/40 text-amber-200 text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1 transition-all"
+                        disabled
+                        className="w-full py-1.5 bg-slate-800/50 border border-slate-700/40 text-slate-500 text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1 cursor-not-allowed"
                       >
-                        <Zap className="w-3 h-3 text-amber-400" /> Pay with Flutterwave
+                        <Zap className="w-3 h-3 text-slate-600" /> Option Disabled
                       </button>
                     </div>
                   </div>

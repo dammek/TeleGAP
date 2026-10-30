@@ -126,6 +126,11 @@ export class TelegramSdkWrapper {
     this.isInitialized = true;
   }
 
+  public static isRealTelegramEnvironment(): boolean {
+    const tg = this.getWebApp();
+    return Boolean(tg && (tg.initDataUnsafe?.user?.id || (tg.initData && tg.initData.length > 0)));
+  }
+
   public static getTelegramUser(fallbackUser?: Partial<TelegramUser>): TelegramUser {
     const tg = this.getWebApp();
     const unsafeUser = tg?.initDataUnsafe?.user;

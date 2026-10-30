@@ -1,6 +1,6 @@
 import React from 'react';
 import { Institution, AlumniProfile, TelegramUser } from '../types';
-import { ChevronDown, CheckCircle2, AlertCircle, Building2, Sparkles } from 'lucide-react';
+import { ChevronDown, CheckCircle2, AlertCircle, Building2, Sparkles, ShieldCheck } from 'lucide-react';
 import { TelegramSdkWrapper } from '../lib/telegramSdk';
 
 interface TelegramHeaderProps {
@@ -9,6 +9,8 @@ interface TelegramHeaderProps {
   currentUser: TelegramUser;
   onOpenSchoolSelector: () => void;
   onOpenProfile: () => void;
+  onOpenAdminDashboard?: () => void;
+  activeTab?: string;
 }
 
 export const TelegramHeader: React.FC<TelegramHeaderProps> = ({
@@ -17,6 +19,8 @@ export const TelegramHeader: React.FC<TelegramHeaderProps> = ({
   currentUser,
   onOpenSchoolSelector,
   onOpenProfile,
+  onOpenAdminDashboard,
+  activeTab,
 }) => {
   const isVerified = activeProfile?.verificationStatus === 'VERIFIED';
 
@@ -71,6 +75,24 @@ export const TelegramHeader: React.FC<TelegramHeaderProps> = ({
 
         {/* Telegram Profile Avatar & Status */}
         <div className="flex items-center gap-2">
+          {currentUser.isAdmin && onOpenAdminDashboard && (
+            <button
+              onClick={() => {
+                TelegramSdkWrapper.haptic('selection');
+                onOpenAdminDashboard();
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${
+                activeTab === 'admin'
+                  ? 'bg-blue-600 text-white border-blue-500 shadow-md'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-blue-300 border-blue-500/30 hover:border-blue-500/60'
+              }`}
+              title="Institutional Administration Portal"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden xs:inline">Admin Portal</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               TelegramSdkWrapper.haptic('light');

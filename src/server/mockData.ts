@@ -1,4 +1,4 @@
-import { Institution, AlumniProfile, TelegramUser, ChapterGroup, AlumniEvent, SkillEndorsement, UniversityNewsItem, RecentTelegramMessage, CareerMilestone } from '../types';
+import { Institution, AlumniProfile, TelegramUser, ChapterGroup, AlumniEvent, SkillEndorsement, UniversityNewsItem, RecentTelegramMessage, CareerMilestone, MentorshipRequest, AdminAuditLog } from '../types';
 
 export const INITIAL_INSTITUTIONS: Institution[] = [
   {
@@ -223,7 +223,22 @@ export const DEMO_TELEGRAM_USERS: TelegramUser[] = [
     tgLastName: 'Ogunlesi',
     tgPhotoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     tgLanguageCode: 'en',
-    isPremium: true
+    isPremium: true,
+    isAdmin: true,
+    adminRole: 'INSTITUTION_ADMIN',
+    adminInstitutionId: 'inst-futminna'
+  },
+  {
+    id: 'user-admin',
+    tgUserId: '990011223',
+    tgUsername: 'alumni_director_futminna',
+    tgFirstName: 'Prof. Ibrahim',
+    tgLastName: 'Haruna',
+    tgPhotoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    tgLanguageCode: 'en',
+    isPremium: true,
+    isAdmin: true,
+    adminRole: 'SUPERADMIN'
   },
   {
     id: 'user-002',
@@ -233,7 +248,8 @@ export const DEMO_TELEGRAM_USERS: TelegramUser[] = [
     tgLastName: 'Kabir',
     tgPhotoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
     tgLanguageCode: 'en',
-    isPremium: false
+    isPremium: false,
+    isAdmin: false
   },
   {
     id: 'user-003',
@@ -243,7 +259,8 @@ export const DEMO_TELEGRAM_USERS: TelegramUser[] = [
     tgLastName: 'Eze',
     tgPhotoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
     tgLanguageCode: 'en',
-    isPremium: true
+    isPremium: true,
+    isAdmin: false
   }
 ];
 
@@ -602,8 +619,299 @@ export const INITIAL_ALUMNI_PROFILES: AlumniProfile[] = [
       tgLastName: 'Briggs',
       tgPhotoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'
     }
+  },
+  // Pending Verification Candidates for Admin Verification Queue:
+  {
+    id: 'prof-pending-001',
+    userId: 'user-pending-001',
+    institutionId: 'inst-futminna',
+    matriculationNo: '2018/1/67291CS',
+    faculty: 'School of Information & Communication Technology (SICT)',
+    department: 'Computer Science',
+    degreeType: 'B.Tech',
+    graduationYear: 2023,
+    entryYear: 2018,
+    verificationStatus: 'PENDING_PORTAL_AUTH',
+    verifiedByMethod: 'TRANSCRIPT_PIN',
+    submittedVerificationAt: '2026-03-30T09:40:00Z',
+    certificateMediaId: 'cert-futminna-67291',
+    certificateFileName: 'FUTMINNA_BTech_Degree_Cert_Chukwudi.pdf',
+    portalPayload: {
+      documentScanUrl: 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=800&auto=format&fit=crop&q=80',
+      cgpa: '4.68 / 5.0 (First Class)',
+      senateApprovalDate: 'November 2023'
+    },
+    jobTitle: 'Junior Backend Engineer',
+    company: 'Kuda Bank',
+    industry: 'Fintech / Engineering',
+    locationCity: 'Lagos',
+    locationCountry: 'Nigeria',
+    bio: 'FUT Minna 2023 First Class graduate in Computer Science. Building distributed microservices with Go and gRPC.',
+    skills: ['Go', 'PostgreSQL', 'Docker', 'Redis', 'Distributed Systems'],
+    linkedinUrl: 'https://linkedin.com/in/chukwudi-nnamdi-dev',
+    isMentor: false,
+    mentoringTopics: [],
+    chapterName: 'Lagos Mainland Tech Chapter',
+    isPublicInDirectory: true,
+    lastActiveAt: new Date().toISOString(),
+    user: {
+      tgUserId: '881920311',
+      tgUsername: 'chukwudi_codes',
+      tgFirstName: 'Chukwudi',
+      tgLastName: 'Nnamdi',
+      tgPhotoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
+    }
+  },
+  {
+    id: 'prof-pending-002',
+    userId: 'user-pending-002',
+    institutionId: 'inst-ui',
+    matriculationNo: 'UI/2014/190821',
+    faculty: 'College of Medicine',
+    department: 'Medicine & Surgery (MBBS)',
+    degreeType: 'MBBS',
+    graduationYear: 2020,
+    entryYear: 2014,
+    verificationStatus: 'PENDING_PORTAL_AUTH',
+    verifiedByMethod: 'STUDENT_ID_API',
+    submittedVerificationAt: '2026-03-30T06:15:00Z',
+    certificateMediaId: 'cert-ui-190821',
+    certificateFileName: 'UI_College_of_Medicine_MBBS_Adeyemi.pdf',
+    portalPayload: {
+      documentScanUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80',
+      mdcnLicenseNo: 'MDCN/2021/89401',
+      residencyHospital: 'University College Hospital (UCH)'
+    },
+    jobTitle: 'Senior Resident Physician',
+    company: 'UCH Ibadan',
+    industry: 'Medicine & Clinical Research',
+    locationCity: 'Ibadan',
+    locationCountry: 'Nigeria',
+    bio: 'UI College of Medicine alumnus specializing in Internal Medicine and Cardiology. Conducting West African cardiovascular epidemiology research.',
+    skills: ['Cardiology', 'Clinical Trials', 'Public Health', 'Echocardiography'],
+    linkedinUrl: 'https://linkedin.com/in/kofo-adeyemi-md',
+    isMentor: true,
+    mentoringTopics: ['Postgraduate Medical Fellowship', 'Primary Fellowship Exams'],
+    chapterName: 'Ibadan Medical Alumni Guild',
+    isPublicInDirectory: true,
+    lastActiveAt: new Date().toISOString(),
+    user: {
+      tgUserId: '772910481',
+      tgUsername: 'kofo_md',
+      tgFirstName: 'Dr. Kofo',
+      tgLastName: 'Adeyemi',
+      tgPhotoUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80'
+    }
+  },
+  {
+    id: 'prof-pending-003',
+    userId: 'user-pending-003',
+    institutionId: 'inst-unilag',
+    matriculationNo: '170402091',
+    faculty: 'Faculty of Law',
+    department: 'Commercial Law',
+    degreeType: 'LL.B',
+    graduationYear: 2022,
+    entryYear: 2017,
+    verificationStatus: 'PENDING_PORTAL_AUTH',
+    verifiedByMethod: 'ALUMNI_EXECUTIVE_MANUAL',
+    submittedVerificationAt: '2026-03-29T18:20:00Z',
+    certificateMediaId: 'cert-unilag-170402091',
+    certificateFileName: 'UNILAG_LLB_Certificate_Folake.pdf',
+    portalPayload: {
+      documentScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
+      nigerianLawSchoolSet: 'Bwari Campus 2023',
+      supremeCourtEnrollmentNo: 'SCN/2023/14290'
+    },
+    jobTitle: 'Corporate Finance Associate',
+    company: 'Aluko & Oyebode',
+    industry: 'Law & Venture Financing',
+    locationCity: 'Lagos',
+    locationCountry: 'Nigeria',
+    bio: 'UNILAG Law alumnus advising tech founders, angel syndicates, and pan-African venture funds on cross-border transactions and SEC compliance.',
+    skills: ['Venture Capital Contracts', 'Fintech Regulatory Compliance', 'Cross-Border M&A'],
+    linkedinUrl: 'https://linkedin.com/in/folake-adeleke-law',
+    isMentor: true,
+    mentoringTopics: ['Nigerian Law School Bar Exam Strategy', 'Transitioning to Tech Law'],
+    chapterName: 'Lagos Island Executive Chapter',
+    isPublicInDirectory: true,
+    lastActiveAt: new Date().toISOString(),
+    user: {
+      tgUserId: '661829014',
+      tgUsername: 'folake_law',
+      tgFirstName: 'Folake',
+      tgLastName: 'Adeleke',
+      tgPhotoUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80'
+    }
+  },
+  {
+    id: 'prof-pending-004',
+    userId: 'user-pending-004',
+    institutionId: 'inst-futminna',
+    matriculationNo: '2017/1/64012EE',
+    faculty: 'School of Electrical Engineering & Technology (SEET)',
+    department: 'Telecommunication Engineering',
+    degreeType: 'B.Eng',
+    graduationYear: 2022,
+    entryYear: 2017,
+    verificationStatus: 'PENDING_PORTAL_AUTH',
+    verifiedByMethod: 'OAUTH2_SCHOOL_PORTAL',
+    submittedVerificationAt: '2026-03-29T11:10:00Z',
+    certificateMediaId: 'cert-futminna-64012',
+    certificateFileName: 'FUTMINNA_BEng_Telecomm_Garba.pdf',
+    portalPayload: {
+      documentScanUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80',
+      cgpa: '4.42 / 5.0'
+    },
+    jobTitle: 'Radio Frequency Optimization Specialist',
+    company: 'MTN Nigeria',
+    industry: 'Telecommunications & 5G',
+    locationCity: 'Abuja',
+    locationCountry: 'Nigeria',
+    bio: 'FUT Minna Telecommunications engineering. Optimizing 4G/5G cellular nodes and private campus networks in Northern Nigeria.',
+    skills: ['5G NR', 'Fiber Optics', 'RF Planning', 'Huawei Core', 'Wireshark'],
+    linkedinUrl: 'https://linkedin.com/in/usman-garba-rf',
+    isMentor: false,
+    mentoringTopics: [],
+    chapterName: 'Abuja Federal Capital Chapter',
+    isPublicInDirectory: true,
+    lastActiveAt: new Date().toISOString(),
+    user: {
+      tgUserId: '551928371',
+      tgUsername: 'usman_iot',
+      tgFirstName: 'Usman',
+      tgLastName: 'Garba',
+      tgPhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80'
+    }
   }
 ];
+
+export const INITIAL_MENTORSHIP_REQUESTS: MentorshipRequest[] = [
+  {
+    id: 'mr-001',
+    institutionId: 'inst-futminna',
+    senderProfileId: 'prof-pending-001',
+    mentorProfileId: 'prof-001',
+    senderName: 'Chukwudi Nnamdi',
+    senderTgUsername: 'chukwudi_codes',
+    mentorName: 'Adebayo Ogunlesi',
+    mentorRole: 'Senior Cloud Solutions Architect at AWS / Paystack',
+    topic: 'Cloud Architecture & Distributed Systems',
+    goal: 'Transitioning from junior Go backend engineer to cloud infrastructure engineer and preparing for AWS Solutions Architect Pro certification.',
+    note: 'Hi Engr. Adebayo, fellow FUT Minna alumnus! I admired your talk on high-throughput payment architectures and would love your guidance on systems design.',
+    cadence: 'Bi-weekly 30-min call',
+    status: 'ACCEPTED',
+    createdAt: '2026-03-24T14:30:00Z'
+  },
+  {
+    id: 'mr-002',
+    institutionId: 'inst-ui',
+    senderProfileId: 'prof-007',
+    mentorProfileId: 'prof-003',
+    senderName: 'Emeka Nwosu',
+    senderTgUsername: 'emeka_ml',
+    mentorName: 'Dr. Amina Kabir',
+    mentorRole: 'Health Informatics Lead & Physician at UCH Ibadan / WHO',
+    topic: 'Clinical Health AI & Multilingual Diagnostics',
+    goal: 'Collaborating on medical dataset annotation for low-resource Yoruba and Hausa speech diagnostic models.',
+    note: 'Dr. Amina, I would love your clinical review on the ethical privacy parameters for our deep learning healthcare study.',
+    cadence: 'Monthly sync',
+    status: 'ACCEPTED',
+    createdAt: '2026-03-22T09:15:00Z'
+  },
+  {
+    id: 'mr-003',
+    institutionId: 'inst-unilag',
+    senderProfileId: 'prof-pending-003',
+    mentorProfileId: 'prof-004',
+    senderName: 'Folake Adeleke',
+    senderTgUsername: 'folake_law',
+    mentorName: 'Chioma Eze',
+    mentorRole: 'Investment Banking Associate at Chapel Hill Denham',
+    topic: 'Venture Capital Term Sheets & Convertible Notes',
+    goal: 'Aligning corporate legal frameworks with Series A debt covenants for African fintech transactions.',
+    note: 'Chioma, let us align on how founders can avoid toxic liquidation preferences during down rounds.',
+    cadence: 'Ad-hoc advising',
+    status: 'COMPLETED',
+    createdAt: '2026-03-15T11:00:00Z'
+  },
+  {
+    id: 'mr-004',
+    institutionId: 'inst-futminna',
+    senderProfileId: 'prof-pending-004',
+    mentorProfileId: 'prof-005',
+    senderName: 'Usman Garba',
+    senderTgUsername: 'usman_iot',
+    mentorName: 'Tunde Bakare',
+    mentorRole: 'Principal Security Operations Lead at Interswitch',
+    topic: 'Telecoms Infrastructure Zero-Trust Security',
+    goal: 'Hardening 5G edge compute nodes and IoT cellular gateways against distributed denial of service attacks.',
+    note: 'Seeking guidance on obtaining OSCP and CISSP while working full-time in telecommunications infrastructure.',
+    cadence: 'Monthly review',
+    status: 'PENDING',
+    createdAt: '2026-03-29T16:45:00Z'
+  },
+  {
+    id: 'mr-005',
+    institutionId: 'inst-ui',
+    senderProfileId: 'prof-pending-002',
+    mentorProfileId: 'prof-003',
+    senderName: 'Dr. Kofo Adeyemi',
+    senderTgUsername: 'kofo_md',
+    mentorName: 'Dr. Amina Kabir',
+    mentorRole: 'Health Informatics Lead & Physician at UCH Ibadan / WHO',
+    topic: 'International Clinical Fellowships & WHO Consultancy',
+    goal: 'Applying for the Commonwealth Medical Fellowship in London and structuring epidemiology research grant applications.',
+    note: 'Good day Dr. Amina, seeking your mentorship on balancing hospital ward rounds with global health scholarship essays.',
+    cadence: 'Bi-weekly check-in',
+    status: 'PENDING',
+    createdAt: '2026-03-30T07:20:00Z'
+  }
+];
+
+export const INITIAL_AUDIT_LOGS: AdminAuditLog[] = [
+  {
+    id: 'audit-001',
+    institutionId: 'inst-futminna',
+    action: 'VERIFICATION_APPROVED',
+    actorName: 'Prof. Ibrahim Haruna (Director, Alumni Relations)',
+    targetName: 'Adebayo Ogunlesi',
+    targetDetails: 'Matric: 2016/1/58291EE · B.Eng Computer Engineering · Verified via Portal OAuth2',
+    timestamp: '2026-03-28T16:20:00Z',
+    status: 'SUCCESS'
+  },
+  {
+    id: 'audit-002',
+    institutionId: 'inst-ui',
+    action: 'VERIFICATION_APPROVED',
+    actorName: 'Alumni Registry Office UI',
+    targetName: 'Dr. Amina Kabir',
+    targetDetails: 'Matric: UI/2012/184920 · MBBS College of Medicine · Automated Portal Auth',
+    timestamp: '2026-03-27T10:14:00Z',
+    status: 'SUCCESS'
+  },
+  {
+    id: 'audit-003',
+    institutionId: 'inst-futminna',
+    action: 'MENTORSHIP_PINGED',
+    actorName: 'Institution Admin Bot',
+    targetName: 'Engr. Adebayo Ogunlesi',
+    targetDetails: 'Reminder dispatched via @Tel_alum_bot for pending mentorship request from Chukwudi Nnamdi',
+    timestamp: '2026-03-26T12:00:00Z',
+    status: 'INFO'
+  },
+  {
+    id: 'audit-004',
+    institutionId: 'inst-unilag',
+    action: 'ROSTER_EXPORTED',
+    actorName: 'University Advancement Officer',
+    targetName: 'Akoka Alumni Registry',
+    targetDetails: 'Exported 1,840 verified alumni records to encrypted CSV for 2026 Convocation Reunion',
+    timestamp: '2026-03-25T14:45:00Z',
+    status: 'INFO'
+  }
+];
+
 
 export const INITIAL_CHAPTERS: ChapterGroup[] = [
   {

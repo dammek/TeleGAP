@@ -25,6 +25,7 @@ import { ProfileProgressTracker } from './components/ProfileProgressTracker';
 import { ThemePickerSection } from './components/ThemePickerSection';
 import { SettingsSection } from './components/SettingsSection';
 import { CareerMilestonesTimeline } from './components/CareerMilestonesTimeline';
+import { AdminDashboard } from './components/AdminDashboard';
 import { generateAlumniCvPdf } from './lib/cvGenerator';
 import {
   Home,
@@ -55,12 +56,18 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<TelegramUser>(DEMO_TELEGRAM_USERS[0]);
+  const [currentUser, setCurrentUser] = useState<TelegramUser>(() => TelegramSdkWrapper.getTelegramUser());
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [activeInstitutionId, setActiveInstitutionId] = useState<string>('inst-futminna');
   const [userProfiles, setUserProfiles] = useState<AlumniProfile[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'directory' | 'chapters' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'directory' | 'chapters' | 'profile' | 'admin'>('dashboard');
   const [isProfilePreviewMode, setIsProfilePreviewMode] = useState<boolean>(false);
+
+  // Developer toolbar visibility (hidden in deployment mode, toggleable via ?dev=true)
+  const [showDevToolbar, setShowDevToolbar] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.search.includes('dev=true');
+  });
 
   // Directory filter initial state from Dashboard exploration
   const [directoryInitialQuery, setDirectoryInitialQuery] = useState<string>('');
@@ -114,12 +121,25 @@ export default function App() {
   const bioInputRef = useRef<HTMLTextAreaElement>(null);
   const skillsInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize Telegram WebApp SDK
+  // Initialize Telegram WebApp SDK & register real user on backend
   useEffect(() => {
     TelegramSdkWrapper.init();
     const realUser = TelegramSdkWrapper.getTelegramUser();
     if (realUser) {
       setCurrentUser(realUser);
+      // Synchronize with database
+      safeFetchJson('/api/user/upsert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tgUserId: realUser.tgUserId,
+          tgFirstName: realUser.tgFirstName,
+          tgLastName: realUser.tgLastName,
+          tgUsername: realUser.tgUsername,
+          tgPhotoUrl: realUser.tgPhotoUrl,
+          isPremium: realUser.isPremium
+        })
+      });
     }
   }, []);
 
@@ -136,9 +156,9 @@ export default function App() {
         setInstitutions(getFallbackInstitutions());
       }
 
-      // 2. Fetch profiles for current user
+      // 2. Fetch profiles for current user from durable database
       const profData = await safeFetchJson<AlumniProfile[]>(`/api/user/profiles?tgUserId=${user.tgUserId}`);
-      if (profData.success && profData.data) {
+      if (profData.success && Array.isArray(profData.data)) {
         setUserProfiles(profData.data);
         if (profData.data.length > 0) {
           const hasCurrent = profData.data.some((p: AlumniProfile) => p.institutionId === activeInstitutionId);
@@ -147,16 +167,12 @@ export default function App() {
           }
         }
       } else {
-        // Fallback to local profile matching user
-        const fallbackProfiles = getFallbackUserProfiles(user.tgUserId);
-        if (fallbackProfiles.length > 0) {
-          setUserProfiles(fallbackProfiles);
-        }
+        setUserProfiles([]);
       }
     } catch (err) {
-      console.warn('Network issue loading initial data, using local state:', err);
+      console.warn('Network issue loading initial data:', err);
       setInstitutions(getFallbackInstitutions());
-      setUserProfiles(getFallbackUserProfiles(user.tgUserId));
+      setUserProfiles([]);
     } finally {
       setIsLoading(false);
     }
@@ -295,16 +311,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Dev Simulator Toolbar (for testing Telegram personas & frame view) */}
-      <TelegramDevToolbar
-        currentUser={currentUser}
-        onSwitchUser={user => {
-          setCurrentUser(user);
-        }}
-        isMobileFrame={isMobileFrame}
-        onToggleMobileFrame={() => setIsMobileFrame(!isMobileFrame)}
-        activeInstitution={activeInstitution}
-      />
+      {/* Dev Simulator Toolbar (only displayed when ?dev=true is provided for debugging) */}
+      {showDevToolbar && (
+        <TelegramDevToolbar
+          currentUser={currentUser}
+          onSwitchUser={user => {
+            setCurrentUser(user);
+          }}
+          isMobileFrame={isMobileFrame}
+          onToggleMobileFrame={() => setIsMobileFrame(!isMobileFrame)}
+          activeInstitution={activeInstitution}
+        />
+      )}
 
       {/* Main App Container */}
       <div className={`flex-1 flex justify-center ${isMobileFrame ? 'p-0 sm:py-6 bg-slate-950' : ''}`}>
@@ -322,6 +340,8 @@ export default function App() {
             currentUser={currentUser}
             onOpenSchoolSelector={() => setIsSchoolSelectorOpen(true)}
             onOpenProfile={() => setActiveTab('profile')}
+            onOpenAdminDashboard={() => setActiveTab('admin')}
+            activeTab={activeTab}
           />
 
           {/* Main Scrollable Content */}
@@ -924,6 +944,21 @@ export default function App() {
                     )}
                   </div>
                 )}
+
+                {/* TAB 5: INSTITUTIONAL ADMIN DASHBOARD */}
+                {activeTab === 'admin' && (
+                  <AdminDashboard
+                    currentUser={currentUser}
+                    institutions={institutions}
+                    activeInstitutionId={activeInstitutionId}
+                    onSelectInstitution={instId => setActiveInstitutionId(instId)}
+                    onSwitchToAdminUser={() => {
+                      const adminUser = DEMO_TELEGRAM_USERS.find(u => u.isAdmin);
+                      if (adminUser) setCurrentUser(adminUser);
+                    }}
+                    onReturnToUserView={() => setActiveTab('dashboard')}
+                  />
+                )}
               </>
             )}
           </main>
@@ -1002,6 +1037,23 @@ export default function App() {
               <User className="w-5 h-5" />
               <span className="text-[10px]">Profile</span>
             </button>
+
+            {currentUser.isAdmin && (
+              <button
+                onClick={() => {
+                  TelegramSdkWrapper.haptic('selection');
+                  setActiveTab('admin');
+                }}
+                className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all ${
+                  activeTab === 'admin'
+                    ? 'text-blue-400 font-bold scale-105'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <ShieldCheck className="w-5 h-5 text-blue-400" />
+                <span className="text-[10px]">Admin</span>
+              </button>
+            )}
           </nav>
         </div>
       </div>

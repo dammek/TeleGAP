@@ -136,18 +136,64 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
           ) : (
-            <div className="p-3 bg-black/30 rounded-xl border border-white/10 text-xs text-slate-300 flex items-center justify-between">
-              <span>You have not enrolled your {institution.shortName} profile yet.</span>
+            <div className="p-3.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/15 text-xs text-slate-200 flex items-center justify-between gap-3">
+              <div>
+                <span className="font-semibold text-white block">Ready to join your alumni chapter?</span>
+                <span className="text-[11px] text-slate-300">Enroll your {institution.shortName} credentials to access the verified directory.</span>
+              </div>
               <button
                 onClick={onOpenOnboarding}
-                className="px-3 py-1 bg-white text-slate-950 font-bold text-[11px] rounded-lg shadow"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shrink-0 active:scale-95 transition-all"
               >
-                Enroll
+                Enroll Now
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* New User Welcome & Quick Setup Banner */}
+      {!profile && (
+        <div className="p-4 bg-gradient-to-br from-blue-950/60 via-slate-900 to-slate-900 border border-blue-500/30 rounded-2xl space-y-3 shadow-lg">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-sm font-bold text-white">Welcome, {currentUser.tgFirstName}!</h2>
+              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                Connect with graduates from <span className="font-semibold text-cyan-300">{institution.name}</span>. Enrolling takes under 60 seconds.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] text-slate-300">
+            <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800 text-center">
+              <span className="font-bold text-white block">1. Profile</span>
+              <span className="text-[10px] text-slate-400">Class & Dept</span>
+            </div>
+            <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800 text-center">
+              <span className="font-bold text-white block">2. Verify</span>
+              <span className="text-[10px] text-slate-400">School Portal</span>
+            </div>
+            <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800 text-center">
+              <span className="font-bold text-white block">3. Connect</span>
+              <span className="text-[10px] text-slate-400">TG Supergroup</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              TelegramSdkWrapper.haptic('selection');
+              onOpenOnboarding();
+            }}
+            className="w-full py-2.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-blue-950/40 transition-all active:scale-98"
+          >
+            <span>Complete Alumni Enrollment</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* 2. Verification Required Alert Banner (if unverified) */}
       {profile && !isVerified && (

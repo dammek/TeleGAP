@@ -23,6 +23,10 @@ export async function safeFetchJson<T = any>(
     if (tmaInitData && !headers.has('x-telegram-init-data')) {
       headers.set('x-telegram-init-data', tmaInitData);
     }
+    const tmaUser = (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user);
+    if (tmaUser?.id && !headers.has('x-telegram-user-id')) {
+      headers.set('x-telegram-user-id', String(tmaUser.id));
+    }
 
     const res = await fetch(input, {
       ...init,
